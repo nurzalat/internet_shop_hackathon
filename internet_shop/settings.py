@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
@@ -46,10 +47,12 @@ INSTALLED_APPS = [
     'rest_auth',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'drf_yasg',
 
     # my apps
     'account',
     'product',
+    'basket',
 ]
 
 MIDDLEWARE = [
