@@ -1,6 +1,6 @@
 from rest_framework.viewsets import ModelViewSet
-from rest_framework import generics
-from product.models import Product, Category, Comment
+from rest_framework import generics, permissions
+from product.models import Product, Category, Comment, Likes
 from product.serializers import ProductSerializer, CategorySerializer
 from product import serializers
 
@@ -11,6 +11,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
+from product.permissions import IsAuthor
 
 
 class StandardPaginationClass(PageNumberPagination):
@@ -46,13 +47,36 @@ class ProductViewSet(ModelViewSet):
         serializer = ProductSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-        # api/v1/products/<id>/comments/
     @action(['GET'], detail=True)
     def comments(self, request, pk):
         product = self.get_object()
         comments = product.comments.all()
         serializer = serializers.CommentSerializer(comments, many=True)
         return Response(serializer.data)
+
+    @action(['POST'],detail=True)
+    def add_to_liked(self, request, pk):
+        product = self.get_object()
+        if request.user.liked.filter(product=product).exists():
+            return Response('You have already liked this product!', status=status.HTTP_400_BAD_REQUEST)
+        Likes.objects.create(product=product, user=request.user)
+        return Response('You liked this product!', status=status.HTTP_201_CREATED)
+
+    @action(['POST'], detail=True)
+    def remove_from_liked(self, request, pk):
+        product = self.get_object()
+        if not request.user.liked.filter(product=product).exists():
+            return Response('You haven\'t liked this product yet!', status=status.HTTP_400_BAD_REQUEST)
+        request.user.liked.filter(product=product).delete()
+        return Response('Your like has been successfully removed!', status=status.HTTP_204_NO_CONTENT)
+
+    def get_permissions(self):
+        if self.action in ('create',):
+            return [permissions.IsAuthenticated(),]
+        elif self.action in ('update', 'partial_update', 'destroy',):
+            return [IsAuthor(),]
+        else:
+            return [permissions.AllowAny(),]
 
 
 class CategoryView(generics.ListAPIView):
@@ -63,18 +87,16 @@ class CategoryView(generics.ListAPIView):
 class CommentListCreateView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
-    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     def perform_create(self, serializer):
-        print("PERFORM CREATE")
-        print(self.request.user)
         return serializer.save(owner=self.request.user)
 
 
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
-    # permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAuthor,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAuthor,)
 
 
 

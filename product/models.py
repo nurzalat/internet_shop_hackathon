@@ -24,11 +24,10 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='images/', blank=True)
 
-
     class Meta:
         ordering = ('id',)
 
-    def __str__(self): return f'{self.title} : {self.price}'
+    def __str__(self): return f'{self.title} : {self.price}сом'
 
 
 class Comment(models.Model):
@@ -37,7 +36,7 @@ class Comment(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self): return f'{self.owner} -> {self.product} -> {self.created_at}'
+    def __str__(self): return f'{self.owner} -> {self.product} -> {self.text}'
 
 
 class Likes(models.Model):
@@ -45,4 +44,6 @@ class Likes(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked')
 
     class Meta:
+        verbose_name = 'like'
+        verbose_name_plural = 'likes'
         unique_together = ['product', 'user']
