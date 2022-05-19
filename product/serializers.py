@@ -7,17 +7,25 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
 
+    def create(self, validated_data):
+        # request = self.context.get('request')
+        created_product = Product.objects.create(**validated_data)
+        return created_product
+
+    def is_liked(self, product):
+        user = self.context.get('request').user
+        return user.liked.filter(product=product).exists()
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         # print('REPR',representation)
         representation['category'] = CategorySerializer(instance.category).data
         representation['comments_detail'] = CommentSerializer(instance.comments.all(), many=True).data
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            representation['is_liked'] = self.is_liked(instance.id)
+        representation['likes_count'] = instance.likes.count()
         return representation
-
-    def create(self, validated_data):
-        # request = self.context.get('request')
-        created_product = Product.objects.create(**validated_data)
-        return created_product
 
 
 class CategorySerializer(serializers.ModelSerializer):
