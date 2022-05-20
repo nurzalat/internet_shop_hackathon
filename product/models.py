@@ -47,3 +47,5 @@ class Likes(models.Model):
         verbose_name = 'like'
         verbose_name_plural = 'likes'
         unique_together = ['product', 'user']
+
+    def __str__(self): return f'{self.product} получил лайк!'
