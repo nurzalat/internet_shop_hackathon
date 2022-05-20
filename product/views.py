@@ -74,7 +74,7 @@ class ProductViewSet(ModelViewSet):
         if self.action in ('create',):
             return [permissions.IsAuthenticated(),]
         elif self.action in ('update', 'partial_update', 'destroy',):
-            return [IsAuthor(),]
+            return [permissions.IsAuthenticated(),]
         else:
             return [permissions.AllowAny(),]
 
